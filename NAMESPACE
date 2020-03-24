@@ -1,0 +1,15 @@
+useDynLib(ordinalpattern)
+import(stats)
+import(utils)
+import(grDevices)
+import(graphics)
+importFrom("gtools","permutations")
+importFrom("mvtnorm","rmvnorm")
+export(
+ patterndependence,
+ patternchange
+)
+
+S3method(plot, change)
+S3method(plot, pattern)
+S3method(print, pattern)
