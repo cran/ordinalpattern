@@ -64,10 +64,24 @@ SEXP vergleich(SEXP data, SEXP ergebnis, SEXP vektor)
     int n = LENGTH(data);
     int p = LENGTH(vektor);
     SEXP ans = duplicate(ergebnis);
+    PROTECT(ans);
     verg(n,p,REAL(data),REAL(ans));
+    UNPROTECT(1);
     return ans;
 }
 
+static const R_CallMethodDef CallEntries[] = {
+    {"vergleich", (DL_FUNC) &vergleich, 3},
+    {NULL, NULL, 0}
+};
+
+
+void R_init_ordinalpattern(DllInfo *dll)
+{
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+    R_forceSymbols(dll, TRUE);
+}
 
 
 
