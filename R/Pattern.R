@@ -4,7 +4,7 @@ n <- length(timeseries)
 if (block==FALSE) {                 # using point by point method
 	numb <- n-h+1                        # how many patterns
 	result <- matrix(0,ncol=h,nrow=numb)  
-	pattern <- .Call("vergleich",timeseries,result,rep(0,h))
+	pattern <- .Call(C_vergleich,timeseries,result,rep(0,h))
 	return(h-pattern-1)
 	}
 if (block==TRUE) {                 # using disjoint blocks

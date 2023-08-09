@@ -1,4 +1,4 @@
-useDynLib(ordinalpattern)
+useDynLib(ordinalpattern, .registration = TRUE, .fixes = "C_")
 import(stats)
 import(utils)
 import(grDevices)
