@@ -1,6 +1,6 @@
-f78ae9ff420892528aebb58d4ac9cded *DESCRIPTION
+fd41f3d8d052ed37efe923da3c7ce9eb *DESCRIPTION
 2cb5276712ce0250981427e757281d06 *NAMESPACE
-3dc40cdf8edd16e09b4cea340cbeffa7 *R/Pattern.R
+f2da66b5089e9f1d7de7412c998cd360 *R/Pattern.R
 88c596e0d9558115e9af24c6aa552ced *man/patternchange.Rd
 025a0662c42d0a32b7d3ed3ce27f9908 *man/patterndependence.Rd
 56a7ed273b3d9991660592473002c234 *src/ordinalpattern.c

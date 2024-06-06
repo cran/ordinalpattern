@@ -22,17 +22,45 @@ if (block==TRUE) {                 # using disjoint blocks
 	}
 }
 
+patternseq2 <- function(timeseries,block=FALSE,first=TRUE) {
+n <- length(timeseries)                         
+if (block==FALSE) {                 # using point by point method
+    pattern <- diff(timeseries)
+    Index <- pattern==0
+    if (sum(Index)>0) pattern[Index] <- sample(c(1,-1),size=sum(Index),replace=TRUE) 
+    pattern <- round(sign(-pattern)/2+1.5)
+	return(pattern)
+	}
+if (block==TRUE) {                 # using disjoint blocks
+	numb <- n%/%2                            
+	remov <- n%%2                 
+	if (first==TRUE)   {
+		timeseries <- timeseries[(remov+1):n]}    # remove first values
+	if (first==FALSE)  {
+		timeseries <- timeseries[1:(n-remov)]}    # remove last values
+	    pattern <- matrix(timeseries,ncol=2,byrow=TRUE)
+        pattern <- pattern[,2]-pattern[,1]
+        pattern <- round(sign(-pattern)/2+1.5)
+    	return(pattern)
+	}
+}
+
 
 patterndependence <- function(tsx,tsy,h=2,block=FALSE,first=TRUE) {
 h <- h+1
 
-# compute pattern
-PatternX <- patternseq(tsx,h=h-1,block=block,first=first)+1  # ranks
-PatternY <- patternseq(tsy,h=h-1,block=block,first=first)+1  # ranks
-PatternX <- as.numeric(PatternX%*%c(0,h^(0:(h-2))))   # transformation to one-dimensional object
-PatternY <- as.numeric(PatternY%*%c(0,h^(0:(h-2))))
+if (h==2) {
+    PatternX <- patternseq2(tsx,block=block,first=first)
+    PatternY <- patternseq2(tsy,block=block,first=first) 
 
-# count pattern 
+} else {
+    # compute pattern
+    PatternX <- patternseq(tsx,h=h-1,block=block,first=first)+1  # ranks
+    PatternY <- patternseq(tsy,h=h-1,block=block,first=first)+1  # ranks
+    PatternX <- as.numeric(PatternX%*%c(0,h^(0:(h-2))))   # transformation to one-dimensional object
+    PatternY <- as.numeric(PatternY%*%c(0,h^(0:(h-2))))
+    }
+
 indexsame <- PatternX==PatternY
 numbsame <- sum(indexsame)  
     
@@ -58,7 +86,7 @@ PatternYz <- table(PatternYz)
 names(PatternYz) <- 0:(length(codepattern)-1)
 Patternnamen <- 0:(length(codepattern)-1)
 coding <- cbind(allpattern-1,codepattern)
-coding <- coding[order(coding[,4]),]
+coding <- coding[order(coding[,h+1]),]
 
 
 
@@ -155,8 +183,11 @@ plot.change <- function(x, ...){
 plot.pattern <- function(x, ...) {
 oldpar <- par(no.readonly = TRUE)
 on.exit(par(oldpar))
-
+if (x$h>2) {
 layout(matrix(c(as.numeric(rbind(1,2:13)),14:25),ncol=2,byrow=TRUE),widths=c(0.8,0.1),heights=rep(1,18))
+    } else {
+layout(matrix(c(as.numeric(rbind(1,2:5)),6:9),ncol=2,byrow=TRUE),widths=c(0.8,0.1),heights=rep(1,18))
+    }
 par(mar=c(1,1,0.5,0),xaxt="n",yaxt="n")
 tsx <- x$tsx
 tsy <- x$tsy
@@ -172,7 +203,9 @@ lines(tsy,col="blue")
 anz <- x$tablesame
 anz <- sort(anz,decreasing=TRUE)
 
-for (j in 1:6) {
+if (x$h==2) {maxv <- 2} else {maxv <- 6}
+
+for (j in 1:maxv) {
 
     indexplo <- (PatternX==as.numeric(names(anz[j])))&x$indexsame
     indexcoding <- as.numeric(names(anz[j]))
@@ -187,7 +220,7 @@ for (j in 1:6) {
 }
 
 
-for (j in 1:6) {
+for (j in 1:maxv) {
 
     par(mar=c(0.5,1,0.5,0),bty="o")
     plot(1:n,rep(0,n),type="n",main="",xlab="",ylab="",ylim=c(0,1))
@@ -222,7 +255,7 @@ print.pattern <- function(x, ...) {
 cat("\n")
 cat(" standardized ordinal pattern coefficient: ",x$patterncoef,sep="")
 cat("\n")
-cat(" using ",x$h+1," consecutive observations and ",sep="")
+cat(" using ",x$h," consecutive observations and ",sep="")
 if (x$block==TRUE) cat("nonoverlapping blocks")
 if (x$block==FALSE) cat("overlapping blocks")
 cat("\n")
