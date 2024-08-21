@@ -8,11 +8,12 @@
 Ordinal Pattern Dependence
 }
 \description{
-Calculates the standard ordinal pattern coefficient and related values
+Calculates the ordinal pattern coefficient and related values.
 }
 
 \usage{
-patterndependence(tsx,tsy,h=2,block=FALSE,first=TRUE)
+patterndependence(tsx,tsy,h=2,block=FALSE,first=TRUE,
+tiesmethod=c("random","first"),ordinalcor=c("standard","positive","negative"))
 
 \method{plot}{pattern}(x, ...)
 \method{print}{pattern}(x, ...)
@@ -21,18 +22,18 @@ patterndependence(tsx,tsy,h=2,block=FALSE,first=TRUE)
 \arguments{
 	\item{tsx}{numeric vector representing the first univariate time series.}
 	\item{tsy}{numeric vector representing the second univariate time series.}
-	\item{h}{numeric value determining the length of the ordinal pattern.}
+	\item{h}{numeric value determining the length of the ordinal pattern; ordinal patterns are of length h+1.}
 	\item{block}{logical value determining whether patterns are calculated on disjoint blocks or overlapping blocks.}
 	\item{first}{logical value indicating which observartions are dropped if \code{block == TRUE} and the time series length is no multiple of \code{h+1}.}
-    \item{x}{object of class \code{"pattern"}, which is the output of \code{patterndependence}}
+	\item{tiesmethod}{character string specifying how ties, that is equal values, are treated, see `Details'.}
+	\item{ordinalcor}{character string specifying which ordinal pattern coefficient is output, see `Details'.}
+    \item{x}{object of class \code{"pattern"}, which is the output of \code{patterndependence}.}
     \item{...}{further arguments passed to the internal plotting function.}
 }
 
 \value{
 Object of class \code{"pattern"} containing the following values:
-	\item{patterncoef}{standard ordinal pattern coefficient.}
-	\item{alpha}{positive ordinal pattern coefficient, see details.}
-	\item{beta}{negative ordinal pattern coefficient, see details.}
+	\item{patterncoef}{ordinal pattern coefficient.}
 	\item{numbequal}{number of equal ordinal patterns.}
 	\item{numbopposite}{number of opposite ordinal patterns.}
 	\item{PatternXz}{number of ordinal patterns in first time series.}
@@ -43,18 +44,20 @@ Object of class \code{"pattern"} containing the following values:
     \item{tsx}{numeric vector representing the first univariate time series.}
     \item{tsy}{numeric vector representing the second univariate time series.}
     \item{maxpat}{number representing the maximal pattern code.}
+    \item{ordinalcor}{character string specifying the type of ordinal pattern coefficient.}
+    \item{tiesmethod}{character string specifying how ties are treated.}
     \item{block}{logical value determining whether patterns are calculated on disjoint blocks or overlapping blocks.}
-    \item{h}{number of consecutive observations defining one pattern}
+    \item{h}{number of increments defining one pattern; ordinal patterns are of length h+1.}
     \item{tablesame}{numeric vector representing the number of coinciding patterns, apportioned into different patterns.}
-    \item{tablesame}{numeric vector representing the number of reflected patterns, apportioned into different patterns.}
+    \item{tableopposite}{numeric vector representing the number of reflected patterns, apportioned into different patterns.}
     \item{indexsame}{logic vector indicating whether patterns in both time series coincide.}
-    \item{indexsame}{logic vector indicating whether patterns in both time series are reflected.}
+    \item{indexopposite}{logic vector indicating whether patterns in both time series are reflected.}
 }
 
 \details{
-The standard ordinal pattern coefficient is a non-parametric and robust measure of dependence between two time series. It is based on ordinal patterns, which are defined as sequences of ranks of \code{h+1} subsequent observations. This sequences of subseqent observations can either move one observation per time or a whole block of \code{h+1} observations. The former is preferred since it uses more information. If one chooses the later, one has to decide whether the first or the last observations are removed in case that the time series length is no multiple of \code{h+1}.
+The standard ordinal pattern coefficient is a non-parametric and robust measure of dependence between two time series. It is based on ordinal patterns, which are defined as sequences of ranks of \code{h+1} subsequent observations. This sequences of subseqent observations can either move one observation per time or a whole block of \code{h+1} observations. The former is preferred since it uses more information. If one chooses the later, one has to decide whether the first or the last observations are removed in case that the time series length is no multiple of \code{h+1}. With regard to equal values within a window of consecutive observations (ties), the argument \code{tiesmethod} determines the approach for computing the respective ordinal patterns. The ``\code{first}'' method is in favor of increasing patterns, whereas the default ``\code{random}'' puts the equal values in random order.
 
-Beside the standard ordinal pattern coefficient, which range from -1 to 1, one can also look at the positive and negative ordinal pattern coefficient, which roughly measures wheather there are unsual many identical or opposite patterns in the time series.  
+Beside the default standard ordinal pattern coefficient, which range from -1 to 1, one can also look at the positive and negative ordinal pattern coefficient, which roughly measures whether there are unsual many identical or opposite patterns in the time series.  
 
 The plot function draws both time series and shows the six most frequent coinciding pattern with counts on the right. At the bottom, the location of these coinciding patterns is visualized.
 }
@@ -68,7 +71,8 @@ Schnurr, A., Dehling, H. (2017): Testing for Structural Breaks via Ordinal Patte
 
 
 \author{
-Alexander \enc{Dürre}{Duerre}
+Alexander \enc{Dürre}{Duerre}, 
+Angelika Silbernagel
 }
 
 

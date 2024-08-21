@@ -7,9 +7,11 @@ importFrom("gtools","permutations")
 importFrom("mvtnorm","rmvnorm")
 export(
  patterndependence,
+ countingpatterns,
  patternchange
 )
 
 S3method(plot, change)
 S3method(plot, pattern)
 S3method(print, pattern)
+S3method(print, patterncounts)

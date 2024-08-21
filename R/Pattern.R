@@ -1,10 +1,15 @@
-patternseq <- function(timeseries,h=2,block=FALSE,first=TRUE) {
+patternseq <- function(timeseries,h=2,block=FALSE,first=TRUE, tiesmethod=c("random", "first")) {
 h <- h+1
-n <- length(timeseries)                         
+n <- length(timeseries)
+tiesmethod <- match.arg(tiesmethod)
 if (block==FALSE) {                 # using point by point method
 	numb <- n-h+1                        # how many patterns
 	result <- matrix(0,ncol=h,nrow=numb)  
-	pattern <- .Call(C_vergleich,timeseries,result,rep(0,h))
+	tiesmethod_numb <- 0 # encoding: default value for original method "random"
+	if(tiesmethod == "first"){
+	  tiesmethod_numb <- 1 # encode alternative method "first"
+	} 
+	pattern <- .Call(C_vergleich,timeseries,result,rep(0,h),tiesmethod_numb) 
 	return(h-pattern-1)
 	}
 if (block==TRUE) {                 # using disjoint blocks
@@ -16,92 +21,146 @@ if (block==TRUE) {                 # using disjoint blocks
 		timeseries <- timeseries[1:(n-remov)]}    # remove last values
 	pattern <- matrix(nrow=numb,ncol=h)  
 	for (i in 1:numb)   {
-		pattern[i,] <- h-rank(timeseries[((i-1)*h+1):(i*h)],ties.method="random") 
+		pattern[i,] <- h-rank(timeseries[((i-1)*h+1):(i*h)],ties.method = tiesmethod) 
 	    	}
     	return(pattern)
 	}
 }
 
-patternseq2 <- function(timeseries,block=FALSE,first=TRUE) {
-n <- length(timeseries)                         
-if (block==FALSE) {                 # using point by point method
-    pattern <- diff(timeseries)
-    Index <- pattern==0
-    if (sum(Index)>0) pattern[Index] <- sample(c(1,-1),size=sum(Index),replace=TRUE) 
-    pattern <- round(sign(-pattern)/2+1.5)
-	return(pattern)
-	}
-if (block==TRUE) {                 # using disjoint blocks
-	numb <- n%/%2                            
-	remov <- n%%2                 
-	if (first==TRUE)   {
-		timeseries <- timeseries[(remov+1):n]}    # remove first values
-	if (first==FALSE)  {
-		timeseries <- timeseries[1:(n-remov)]}    # remove last values
-	    pattern <- matrix(timeseries,ncol=2,byrow=TRUE)
-        pattern <- pattern[,2]-pattern[,1]
-        pattern <- round(sign(-pattern)/2+1.5)
-    	return(pattern)
-	}
+fubi <- function(x){
+  su=sort(unique(x))
+  for (i in 1:length(su)) x[x==su[i]] = i
+  return(x)
+}
+
+patternseqties <- function(timeseries, h=2, block=FALSE, first=TRUE){
+  h <- h+1
+  n <- length(timeseries)
+  if (block==FALSE) {                 # using point by point method
+    numb <- n-h+1                        # how many patterns
+    tsdata <- matrix(nrow=numb,ncol=h)
+    for(i in 1:h){
+      tsdata[,i] <- timeseries[i:(numb+i-1)]
+    }
+  }
+  else {                 # using disjoint blocks
+    numb <- n%/%h                            
+    remov <- n%%h
+    tsdata <- matrix(nrow=numb,ncol=h)
+    if (first==TRUE) {
+      timeseries <- timeseries[(remov+1):n]}    # remove first values
+    else {
+      timeseries <- timeseries[1:(n-remov)]}    # remove last values
+    tsdata <- matrix(nrow=numb,ncol=h)
+    for(i in 1:h){
+      tsdata[,i] <- timeseries[seq(i, numb*h, by=h)]
+    }
+  }
+  pattern <- t(apply(tsdata, 1, fubi)) # Achtung!
+  return(h-pattern-1)
+}
+
+countingpatterns <- function(tsx, h=2, block=FALSE, first=TRUE, tiesmethod=c("random", "first"), generalized=FALSE){
+  h <- h+1
+  tiesmethod <- match.arg(tiesmethod)
+  
+  if(generalized==FALSE){
+    # compute pattern
+    PatternX <- patternseq(tsx,h=h-1,block=block,first=first, tiesmethod=tiesmethod)+1  # ranks
+    PatternX <- as.numeric(PatternX%*%c(0,h^(0:(h-2))))   # transformation to one-dimensional object
+    
+    minPattern <- as.numeric(t(h:1)%*%c(0,h^(0:(h-2))))
+    allpattern <- permutations(n=h,r=h) 
+    codepattern <- as.numeric(allpattern%*%c(0,h^(0:(h-2))))-minPattern # value of all possible patterns
+  } else {
+    # compute pattern
+    PatternX <- patternseqties(tsx,h=h-1,block=block,first=first)+1  # ranks
+    PatternX <- as.numeric(PatternX%*%c(h^(0:(h-1))))   # transformation to one-dimensional object
+    #different factors if compared to before as more information needed in order to represent GOPs correctly
+    
+    # count pattern 
+    minPattern <- sum(c(h^(0:(h-1)))) # minpattern c(1, ..., 1)
+    allpattern <- permutations(n=h,r=h, repeats.allowed = TRUE)
+    allpattern <- unique(t(apply(allpattern, 1, fubi))) # Obtain unique DOPs
+    allpattern <- h-allpattern
+    codepattern <- as.numeric(allpattern%*%c(h^(0:(h-1))))-minPattern # value of all possible patterns
+  }
+  PatternX <- PatternX-minPattern
+  PatternXz <- factor(PatternX,levels=codepattern)    # transformation to factors
+  
+  PatternXz <- table(PatternXz)                      # counting the patterns
+  names(PatternXz) <- as.list(data.frame(t(allpattern)))
+  Patternnamen <- 0:(length(codepattern)-1)
+  result <- list(PatternXz, allpattern, h, generalized, tiesmethod, block)
+  names(result) <- c("patterncounts", "allpatterns", "h", "generalized", "tiesmethod", "block")
+  class(result) <- "patterncounts"
+  return(result)
 }
 
 
-patterndependence <- function(tsx,tsy,h=2,block=FALSE,first=TRUE) {
-h <- h+1
+patterndependence <- function(tsx,tsy,h=2,block=FALSE,first=TRUE, tiesmethod=c("random", "first"), ordinalcor=c("standard", "positive", "negative")) {
+  h <- h+1
+  tiesmethod <- match.arg(tiesmethod)
+  ordinalcor <- match.arg(ordinalcor)
 
-if (h==2) {
-    PatternX <- patternseq2(tsx,block=block,first=first)
-    PatternY <- patternseq2(tsy,block=block,first=first) 
+  # compute pattern
+  PatternX <- patternseq(tsx,h=h-1,block=block,first=first, tiesmethod=tiesmethod)+1  # ranks
+  PatternY <- patternseq(tsy,h=h-1,block=block,first=first, tiesmethod=tiesmethod)+1  # ranks
+  PatternX <- as.numeric(PatternX%*%c(0,h^(0:(h-2))))   # transformation to one-dimensional object
+  PatternY <- as.numeric(PatternY%*%c(0,h^(0:(h-2))))
+  
+  # count pattern 
+  indexsame <- PatternX==PatternY
+  numbsame <- sum(indexsame)  
+  
+  maxPattern <- as.numeric(t(1:h)%*%c(0,h^(0:(h-2))))   
+  minPattern <- as.numeric(t(h:1)%*%c(0,h^(0:(h-2))))
+  PatternX <- PatternX-minPattern
+  PatternY <- PatternY-minPattern
+  maxPattern <- maxPattern-minPattern
+  indexopposite <- PatternX+PatternY==maxPattern
+  numbopposite <- sum(indexopposite)  # value of opposite patterns equal maxPattern! 
+  
+  allpattern <- permutations(h,h) 
+  codepattern <- as.numeric(allpattern%*%c(0,h^(0:(h-2))))-minPattern # value of all possible patterns
+  PatternXz <- factor(PatternX,levels=codepattern)    # transformation to factors
+  PatternYz <- factor(PatternY,levels=codepattern)
+  
+  tablesame <- table(PatternXz[indexsame])
+  tableopposite <- table(PatternXz[indexopposite])
+  
+  PatternXz <- table(PatternXz)                      # counting the patterns
+  names(PatternXz) <- 0:(length(codepattern)-1)
+  PatternYz <- table(PatternYz)
+  names(PatternYz) <- 0:(length(codepattern)-1)
+  Patternnamen <- 0:(length(codepattern)-1)
+  coding <- cbind(allpattern-1,codepattern)
+  coding <- coding[order(coding[,h]),] 
+  
+  # calculate coefficients
+  n <- sum(PatternXz)
+  q <- sum(PatternXz*PatternYz)/n^2
+  p <- numbsame/n
+  r <- numbopposite/n
+  s <- sum(PatternXz*rev(PatternYz))/n^2
+  alpha <- p-q
+  beta <- r-s
+  posordercor <- alpha/(1-q)
+  negordercor <- beta/(1-s)
+  standordercor <- max(posordercor,0)-max(negordercor,0)
 
-} else {
-    # compute pattern
-    PatternX <- patternseq(tsx,h=h-1,block=block,first=first)+1  # ranks
-    PatternY <- patternseq(tsy,h=h-1,block=block,first=first)+1  # ranks
-    PatternX <- as.numeric(PatternX%*%c(0,h^(0:(h-2))))   # transformation to one-dimensional object
-    PatternY <- as.numeric(PatternY%*%c(0,h^(0:(h-2))))
-    }
-
-indexsame <- PatternX==PatternY
-numbsame <- sum(indexsame)  
-    
-maxPattern <- as.numeric(t(1:h)%*%c(0,h^(0:(h-2))))   
-minPattern <- as.numeric(t(h:1)%*%c(0,h^(0:(h-2))))
-PatternX <- PatternX-minPattern
-PatternY <- PatternY-minPattern
-maxPattern <- maxPattern-minPattern
-indexopposite <- PatternX+PatternY==maxPattern
-numbopposite <- sum(indexopposite)  # value of opposite patterns equal maxPattern! 
- 
-allpattern <- permutations(n=h,r=h)
-codepattern <- as.numeric(allpattern%*%c(0,h^(0:(h-2))))-minPattern # value of all possible patterns
-PatternXz <- factor(PatternX,levels=codepattern)    # transformation to factors
-PatternYz <- factor(PatternY,levels=codepattern)
-
-tablesame <- table(PatternXz[indexsame])
-tableopposite <- table(PatternXz[indexopposite])
-
-PatternXz <- table(PatternXz)                      # counting the patterns
-names(PatternXz) <- 0:(length(codepattern)-1)
-PatternYz <- table(PatternYz)
-names(PatternYz) <- 0:(length(codepattern)-1)
-Patternnamen <- 0:(length(codepattern)-1)
-coding <- cbind(allpattern-1,codepattern)
-coding <- coding[order(coding[,h+1]),]
-
-
-
-# calculate coefficients
-n <- sum(PatternXz)
-q <- sum(PatternXz*PatternYz)/n^2
-p <- numbsame/n
-r <- numbopposite/n
-s <- sum(PatternXz*rev(PatternYz))/n^2
-alpha <- p-q
-beta <- r-s
-ordercor <- max(alpha/(1-q),0)-max(beta/(1-s),0)
-result <- list(ordercor,alpha,beta,numbsame,numbopposite,PatternXz,PatternYz,coding,PatternX,PatternY,tsx,tsy,maxPattern,block,h,tablesame,tableopposite,indexsame,indexopposite)
-names(result) <- c("patterncoef","alpha","beta","numbequal","numboppos","patterncounttsx","patterncounttsy","coding",
-"patternseqtsx","patternseqtsy","tsx","tsy","maxpat","block","h","tablesame","tableopposite","indexsame","indexopposite")
+  if(ordinalcor=="standard"){
+    ordercor <- standordercor
+  } 
+  else if(ordinalcor=="positive"){
+    ordercor <- posordercor
+  } 
+  else {
+    ordercor <- negordercor
+  }
+result <- list(ordercor,numbsame,numbopposite,PatternXz,PatternYz,coding,PatternX,PatternY,tsx,tsy,maxPattern,ordinalcor,tiesmethod,block,h,tablesame,tableopposite,indexsame,indexopposite)
+names(result) <- c("patterncoef","numbequal","numbopposite","patterncounttsx","patterncounttsy","coding",
+"patternseqtsx","patternseqtsy","tsx","tsy","maxpat","ordinalcor","tiesmethod","block","h","tablesame","tableopposite","indexsame","indexopposite")
 class(result) <- "pattern"
 return(result)
 }
@@ -183,11 +242,8 @@ plot.change <- function(x, ...){
 plot.pattern <- function(x, ...) {
 oldpar <- par(no.readonly = TRUE)
 on.exit(par(oldpar))
-if (x$h>2) {
+
 layout(matrix(c(as.numeric(rbind(1,2:13)),14:25),ncol=2,byrow=TRUE),widths=c(0.8,0.1),heights=rep(1,18))
-    } else {
-layout(matrix(c(as.numeric(rbind(1,2:5)),6:9),ncol=2,byrow=TRUE),widths=c(0.8,0.1),heights=rep(1,18))
-    }
 par(mar=c(1,1,0.5,0),xaxt="n",yaxt="n")
 tsx <- x$tsx
 tsy <- x$tsy
@@ -203,9 +259,7 @@ lines(tsy,col="blue")
 anz <- x$tablesame
 anz <- sort(anz,decreasing=TRUE)
 
-if (x$h==2) {maxv <- 2} else {maxv <- 6}
-
-for (j in 1:maxv) {
+for (j in 1:6) {
 
     indexplo <- (PatternX==as.numeric(names(anz[j])))&x$indexsame
     indexcoding <- as.numeric(names(anz[j]))
@@ -220,7 +274,7 @@ for (j in 1:maxv) {
 }
 
 
-for (j in 1:maxv) {
+for (j in 1:6) {
 
     par(mar=c(0.5,1,0.5,0),bty="o")
     plot(1:n,rep(0,n),type="n",main="",xlab="",ylab="",ylim=c(0,1))
@@ -251,19 +305,67 @@ for (j in 1:maxv) {
 }
 }
 
+print.patterncounts <- function(x, ...) {
+  cat("\n")
+  cat(" Empirical ordinal pattern distribution ",sep="")
+  cat("\n")
+  cat(" using ",x$h," consecutive observations and ",sep="")
+  if (x$block==TRUE) cat("nonoverlapping blocks")
+  if (x$block==FALSE) cat("overlapping blocks")
+  cat("\n")
+  cat(" with regard to ",sep="")
+  if (x$generalized==TRUE) cat("generalized ordinal patterns.")
+  if (x$generalized==FALSE) cat("classical ordinal patterns.")
+  cat("\n")
+  cat("\n")
+  if (x$generalized==FALSE && x$tiesmethod=="random") cat(" With regard to ties, randomization is performed.", "\n", "\n")
+  if (x$generalized==FALSE && x$tiesmethod=="first") cat(" With regard to ties, increasing patterns are favored.", "\n", "\n")
+  spacen1 <- max(1, 2*x$h+3-8) #Achtung!
+  cat(" pattern")
+  for(i in 1:spacen1) cat(" ")
+  cat("| counts")
+  cat("\n")
+  patterncounts <- x$patterncounts
+  allpattern <- x$allpatterns
+  spacen2 <- max(patterncounts)
+  spacen2 <- 6-nchar(spacen2)
+  n <- length(patterncounts)
+  for (i in 1:n) {
+    cat(" (")
+    for (j in 1:x$h) {
+      cat(x$allpattern[i,j])
+      if (j<x$h) cat(",") else {
+        if (2<x$h){
+          cat(") | ")
+        } else {
+          cat(")   | ")
+        }
+      }
+    }
+    for (j in 1:spacen2) cat(" ")
+    cat(patterncounts[i])
+    cat("\n")
+  }
+  cat("\n")
+}
+
 print.pattern <- function(x, ...) {
 cat("\n")
-cat(" standardized ordinal pattern coefficient: ",x$patterncoef,sep="")
+if (x$ordinalcor=="standard") cat(" Standardized")
+if (x$ordinalcor=="positive") cat(" Positive")
+if (x$ordinalcor=="negative") cat(" Negative")
+cat(" ordinal pattern coefficient: ",x$patterncoef,sep="")
 cat("\n")
-cat(" using ",x$h," consecutive observations and ",sep="")
-if (x$block==TRUE) cat("nonoverlapping blocks")
-if (x$block==FALSE) cat("overlapping blocks")
+cat(" Using ",x$h," consecutive observations and ",sep="")
+if (x$block==TRUE) cat("nonoverlapping blocks.")
+if (x$block==FALSE) cat("overlapping blocks.")
+cat("\n")
+if (x$tiesmethod=="random") cat(" With regard to ties, randomization is performed.", "\n", "\n")
+if (x$tiesmethod=="first") cat(" With regard to ties, increasing patterns are favored.", "\n", "\n")
+cat(" There are",x$numbequal,"coinciding and",x$numbopposite,"reflected patterns.")
 cat("\n")
 cat("\n")
-cat(" there are",x$numbequal,"coinciding and",x$numboppos,"reflected patterns")
-cat("\n")
-cat("\n")
-spacen1 <- 2*x$h+3-8
+spacen1 <- max(1, 2*x$h+3-8) #Achtung!
 cat(" pattern")
 for(i in 1:spacen1) cat(" ")
 cat("| coinciding | reflected")
@@ -284,7 +386,11 @@ cat(" (")
 for (j in 1:x$h) {
 cat(x$coding[i,j])
 if (j<x$h) cat(",") else {
-cat(") | ")
+  if (2<x$h){
+    cat(") | ")
+  } else {
+    cat(")   | ")
+  }
 }
 }
 for (j in 1:spacen2) cat(" ")
@@ -296,7 +402,6 @@ cat("\n")
 }
 cat("\n")
 }
-
 
 
 
