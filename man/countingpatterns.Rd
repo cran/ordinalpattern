@@ -11,7 +11,7 @@ Calculates the empirical ordinal pattern distribution.
 }
 
 \usage{
-countingpatterns(tsx,h=2,block=FALSE,first=TRUE,tiesmethod=c("random","first"),
+countingpatterns(tsx,d=3,block=FALSE,first=TRUE,tiesmethod=c("random","first"),
 generalized=FALSE)
 
 \method{print}{patterncounts}(x, ...)
@@ -19,9 +19,9 @@ generalized=FALSE)
 
 \arguments{
 	\item{tsx}{numeric vector representing the univariate time series.}
-	\item{h}{numeric value determining the length of the ordinal pattern; ordinal patterns are of length h+1.}
+	\item{d}{numeric value determining the length of the ordinal pattern.}
 	\item{block}{logical value determining whether patterns are calculated on disjoint blocks or overlapping blocks.}
-	\item{first}{logical value indicating which observartions are dropped if \code{block == TRUE} and the time series length is no multiple of \code{h+1}.}
+	\item{first}{logical value indicating which observartions are dropped if \code{block == TRUE} and the time series length is no multiple of \code{d}.}
 	\item{tiesmethod}{character string specifying how ties, that is equal values, are treated if \code{generalized == FALSE}, see `Details'.}
 	\item{generalized}{logical value determining whether classical ordinal patterns or their generalization with regard to ties are considered, see `Details'.}
   \item{x}{object of class \code{"patterncounts"}, which is the output of \code{countingpatterns}.}
@@ -32,14 +32,14 @@ generalized=FALSE)
 Object of class \code{"patterncounts"} containing the following values:
 	\item{patterncounts}{absolute frequencies of ordinal patterns.}
 	\item{allpatterns}{list of all ordinal patterns considered.}
-    \item{h}{number of increments defining one pattern; ordinal patterns are of length h+1.}
+    \item{d}{length of the ordinal pattern.}
     \item{generalized}{logical value determining whether classical ordinal patterns or their generalization with regard to ties are considered.}
     \item{tiesmethod}{character string specifying how ties are treated.}
     \item{block}{logical value determining whether patterns are calculated on disjoint blocks or overlapping blocks.}    
 }
 
 \details{
-Ordinal patterns, which are defined as sequences of ranks of \code{h+1} subsequent observations, are a useful tool to describe the dependence within or between time series. That sequences of subseqent observations can either move one observation per time or a whole block of \code{h+1} observations. The former is preferred since it uses more information. If one chooses the later, one has to decide whether the first or the last observations are removed in case that the time series length is no multiple of \code{h+1}. With regard to equal values within a window of consecutive observations (ties), the argument \code{tiesmethod} determines the approach for computing the respective ordinal patterns. The ``\code{first}'' method is in favor of increasing patterns, whereas the default ``\code{random}'' puts the equal values in random order.
+Ordinal patterns, which are defined as sequences of ranks of \code{d} subsequent observations, are a useful tool to describe the dependence within or between time series. That sequences of subseqent observations can either move one observation per time or a whole block of \code{d} observations. The former is preferred since it uses more information. If one chooses the later, one has to decide whether the first or the last observations are removed in case that the time series length is no multiple of \code{d}. With regard to equal values within a window of consecutive observations (ties), the argument \code{tiesmethod} determines the approach for computing the respective ordinal patterns. The ``\code{first}'' method is in favor of increasing patterns, whereas the default ``\code{random}'' puts the equal values in random order.
 
 Beside the classical ordinal patterns, one can also consider the generalized version proposed by Schnurr and Fischer (2022), where the ordinal information of stagnation in the case of ties is also included by taking into account a larger set of patterns.
 }

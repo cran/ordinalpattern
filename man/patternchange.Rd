@@ -11,7 +11,7 @@ Test for a change in the dependence structure of two time series using ordinal p
 }
 
 \usage{
-patternchange(tsx,tsy,h=2,conf.level,weight=TRUE,weightfun=NULL,bn=log(length(tsx)),
+patternchange(tsx,tsy,d=3,conf.level,weight=TRUE,weightfun=NULL,bn=log(length(tsx)),
     kernel=function(x){return(max(0,1-abs(x)))})
 
 \method{plot}{change}(x, ...)
@@ -20,8 +20,8 @@ patternchange(tsx,tsy,h=2,conf.level,weight=TRUE,weightfun=NULL,bn=log(length(ts
 \arguments{
 	\item{tsx}{numeric vector of first univariate time series.}
 	\item{tsy}{numeric vector of second univariate time series.}
-	\item{h}{numeric value determining the length of ordinal pattern.}
-    \item{conf.level}{numerical value indicating the confidence level of the test.}
+	\item{d}{numeric value determining the length of ordinal pattern.}
+  \item{conf.level}{numerical value indicating the confidence level of the test.}
 	\item{weight}{logical value indicating whether one uses weights of the L1 norm or the empirical probability of identical patterns; see details.}
 	\item{weightfun}{function which defines the weights given the L1 norm between the patterns if \code{weight=TRUE}. If no weight-function is given, the canonical weight function is used; see details.}
 	\item{bn}{numerical value determining the bandwidth of the kernel estimator used to estimate the long run variance.}
@@ -43,7 +43,7 @@ Object with classes \code{"change"} and \code{"htest"} containing the following 
 }
 
 \details{
-Given two timeseries \code{tsx} and \code{tsy} a cusum type statistic tests whether there is a change in the patter dependence or not. The test is based on a comparison of patterns of length \code{h+1} in \code{tsx} and \code{tsy}. One can either choose the number of identical patterns (\code{weight=FALSE}) or a metric that is defined by the \code{weightfun} argument to measure the difference between patterns (\code{weight=TRUE}). If no (\code{weightfun}) is given, the canonical weightfunction is used, which equals 1 if patterns are identical and 0 if the L1 norm of their difference attains the maximal possible value. The value is linear interpolated in between.
+Given two timeseries \code{tsx} and \code{tsy} a cusum type statistic tests whether there is a change in the patter dependence or not. The test is based on a comparison of patterns of length \code{d} in \code{tsx} and \code{tsy}. One can either choose the number of identical patterns (\code{weight=FALSE}) or a metric that is defined by the \code{weightfun} argument to measure the difference between patterns (\code{weight=TRUE}). If no (\code{weightfun}) is given, the canonical weightfunction is used, which equals 1 if patterns are identical and 0 if the L1 norm of their difference attains the maximal possible value. The value is linear interpolated in between.
 
 The procedure depends on an estimate of the long run variance. Here a kernel estimator is used. A kernel function and a bandwidth can be set using the arguments \code{kernel} and \code{bn}. If none of them is given, the bartlett kernel with a bandwidth of \code{log(n)}, where \code{n} equals the length of the timeseries, is used.  
 }

@@ -1,8 +1,8 @@
 Package: ordinalpattern
 Type: Package
 Title: Tests Based on Ordinal Patterns
-Version: 0.2.5
-Date: 2024-8-19
+Version: 0.2.6
+Date: 2024-11-11
 Authors@R: c(
   person("Alexander", "Duerre", role=c("aut"), email="alexander.duerre@udo.edu"),
   person("Svenja", "Fischer", role=c("ctb"), email="svenja.fischer@wur.nl"),
@@ -19,6 +19,7 @@ License: GPL-2 | GPL-3
 ByteCompile: true
 Encoding: UTF-8
 NeedsCompilation: yes
-Packaged: 2024-08-20 06:48:02 UTC; angie
+RoxygenNote: 7.3.2
+Packaged: 2024-11-11 11:18:39 UTC; angie
 Repository: CRAN
-Date/Publication: 2024-08-21 11:00:06 UTC
+Date/Publication: 2024-11-11 12:40:02 UTC
