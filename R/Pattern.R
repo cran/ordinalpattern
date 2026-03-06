@@ -28,8 +28,9 @@ if (block==TRUE) {                 # using disjoint blocks
 
 fubi <- function(x){
   su=sort(unique(x))
-  for (i in 1:length(su)) x[x==su[i]] = i
-  return(x)
+  y=rep(0,length(su))
+  for (i in 1:length(su)) y[x==su[i]] = i
+  return(y)
 }
 
 patternseqties <- function(timeseries, d=3, block=FALSE, first=TRUE){
