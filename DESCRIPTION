@@ -1,7 +1,7 @@
 Package: ordinalpattern
 Type: Package
 Title: Tests Based on Ordinal Patterns
-Version: 0.2.8
+Version: 0.2.9
 Date: 2026-03-06
 Authors@R: c(
   person("Alexander", "Duerre", role=c("aut"), email="alexander.duerre@udo.edu"),
@@ -20,6 +20,6 @@ ByteCompile: true
 Encoding: UTF-8
 NeedsCompilation: yes
 RoxygenNote: 7.3.2
-Packaged: 2026-03-06 12:12:51 UTC; Angelika
+Packaged: 2026-03-06 13:41:44 UTC; Angelika
 Repository: CRAN
-Date/Publication: 2026-03-06 13:00:03 UTC
+Date/Publication: 2026-03-09 16:00:02 UTC
